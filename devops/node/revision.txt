@@ -1,10 +1,10 @@
 {
     "taskDefinition": {
-        "taskDefinitionArn": "arn:aws:ecs:us-east-1:207155759131:task-definition/node-prod:70",
+        "taskDefinitionArn": "arn:aws:ecs:us-east-1:207155759131:task-definition/node-prod:71",
         "containerDefinitions": [
             {
                 "name": "app",
-                "image": "207155759131.dkr.ecr.us-east-1.amazonaws.com/node-prod-app:115",
+                "image": "207155759131.dkr.ecr.us-east-1.amazonaws.com/node-prod-app:116",
                 "cpu": 256,
                 "memory": 256,
                 "portMappings": [
@@ -35,7 +35,7 @@
             }
         ],
         "family": "node-prod",
-        "revision": 70,
+        "revision": 71,
         "volumes": [],
         "status": "ACTIVE",
         "requiresAttributes": [
