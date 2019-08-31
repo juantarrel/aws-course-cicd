@@ -3,5 +3,6 @@
   <component name="VcsDirectoryMappings">
     <mapping directory="$PROJECT_DIR$" vcs="Git" />
     <mapping directory="$PROJECT_DIR$/devops/node/aws-course-cicd" vcs="Git" />
+    <mapping directory="$PROJECT_DIR$/devops/nodejs/aws-course-cicd" vcs="Git" />
   </component>
 </project>

@@ -93,13 +93,15 @@ aws cloudformation create-stack --stack-name elb-node-prod-$BUILD_NUMBER --templ
 echo $((BUILD_NUMBER + 1)) > build-number
 
 build-docker() {
-    cp web_docker/* .
+    mkdir nodejs
+    cp -R aws-course-cicd/src/nodejs nodejs
+    cp -R web_docker/* nodejs
     aws ecr get-login --no-include-email --region=us-east-1 | sh
-    docker build --build-arg APP_DOMAIN=$1 -t node-base .
+    docker build --build-arg APP_DOMAIN=$1 -t node-base nodejs
     docker tag node-base:latest 207155759131.dkr.ecr.us-east-1.amazonaws.com/node-prod-app:$BUILD_NUMBER
     docker push 207155759131.dkr.ecr.us-east-1.amazonaws.com/node-prod-app:$BUILD_NUMBER
-    rm Dockerfile
     rm -fR aws-course-cicd
+    rm -fR nodejs
 }
 
 build-docker PRODUCTION
@@ -156,7 +158,7 @@ add-to-domain() {
   while sleep 1m
   do
     n_build=$((BUILD_NUMBER + 1))
-    check=$(curl -k $(cat url.txt)/build-info/ )
+    check=$(curl -k $(cat url.txt)/build-info )
     echo "New Build Number $n_build"
     echo "Running Build Number $check"
     if [[ "$n_build" == "$check" ]]; then
@@ -181,7 +183,7 @@ add-to-domain() {
         }
       "
       echo "Deployment Done"
-      echo -e "\033[0;32mThe enviroment is done !!!  check here -> http://node-prod.atobcargo.com\033[m"
+      echo -e "\033[0;32mThe enviroment is done !!!  check here -> http://nodejs-prod.atobcargo.com\033[m"
       break
     else
       echo "Please wait for few more minutes, Ecs is deploying the code."
