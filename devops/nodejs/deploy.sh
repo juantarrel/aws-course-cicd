@@ -93,7 +93,7 @@ aws cloudformation create-stack --stack-name elb-node-prod-$BUILD_NUMBER --templ
 echo $((BUILD_NUMBER + 1)) > build-number
 
 build-docker() {
-    mkdir nodejs
+    #mkdir -f nodejs
     cp -R aws-course-cicd/src/nodejs nodejs
     cp -R web_docker/* nodejs
     aws ecr get-login --no-include-email --region=us-east-1 | sh
