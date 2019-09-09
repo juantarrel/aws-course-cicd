@@ -38,12 +38,17 @@ list-branches() {
     done
     read SELECTED_ARRAY_BRANCH
     BRANCH_TO_DEPLOY=${BRANCHES_ARRAY[SELECTED_ARRAY_BRANCH-1]}
-    git checkout $BRANCH_TO_DEPLOY
+    git checkout "$(echo $BRANCH_TO_DEPLOY | sed 's/^[ \s]*//;s/[ \s]*$//')"
+    rm -rf devops
+    rm branches_clean.txt
+    rm branches_uniques.txt
     cd ..
 
 }
 
 list-branches $AWS_COURSE_NAME_PROJECT $AWS_COURSE_GIT_REPOSITORY
+
+
 
 #build number
 if [ ! -f build-number ]; then
@@ -58,7 +63,7 @@ export AWS_SECRET_ACCESS_KEY=$AWS_COURSE_AWS_SECRET_ACCESS_KEY
 aws ecr get-login --no-include-email --region us-east-1 | sh
 
 #CLOUD FORMATION
-aws cloudformation create-stack --stack-name elb-node-prod-$BUILD_NUMBER --template-body https://public-aws-course-cicd-script.s3.amazonaws.com/node_prod_2019_07_14.json --parameters '
+aws cloudformation create-stack --stack-name elb-nodejs-prod-$BUILD_NUMBER --template-body https://public-aws-course-cicd-script.s3.amazonaws.com/node_prod_2019_07_14.json --parameters '
 [
    {
       "ParameterKey": "AZs",
@@ -93,9 +98,9 @@ aws cloudformation create-stack --stack-name elb-node-prod-$BUILD_NUMBER --templ
 echo $((BUILD_NUMBER + 1)) > build-number
 
 build-docker() {
-    #mkdir -f nodejs
     cp -R aws-course-cicd/src/nodejs nodejs
     cp -R web_docker/* nodejs
+    cp build-number nodejs
     aws ecr get-login --no-include-email --region=us-east-1 | sh
     docker build --build-arg APP_DOMAIN=$1 -t node-base nodejs
     docker tag node-base:latest 207155759131.dkr.ecr.us-east-1.amazonaws.com/node-prod-app:$BUILD_NUMBER
@@ -148,7 +153,7 @@ build-cluster() {
     aws ecs update-service --cluster $1 --service node --task-definition $1:$BUILD_REVISION
 
     sleep 150
-    aws cloudformation describe-stacks --stack-name elb-node-prod-$BUILD_NUMBER --output text | grep "URL" | awk '{print $7}' | sed 's/^.*\(elb-node*\)/\1/g' > url.txt
+    aws cloudformation describe-stacks --stack-name elb-nodejs-prod-$BUILD_NUMBER --output text | grep "URL" | awk '{print $7}' | sed 's/^.*\(elb-nodejs*\)/\1/g' > url.txt
 
 }
 
@@ -169,7 +174,7 @@ add-to-domain() {
             {
               \"Action\": \"UPSERT\",
               \"ResourceRecordSet\": {
-                \"Name\": \"node-prod.atobcargo.com\",
+                \"Name\": \"nodejs-prod.atobcargo.com\",
                 \"Type\": \"CNAME\",
                 \"TTL\": 60,
                 \"ResourceRecords\": [
@@ -193,3 +198,18 @@ add-to-domain() {
 
 add-to-domain
 
+while sleep 1m
+do
+  n_build=$((BUILD_NUMBER + 1))
+  check=$(curl -k sandbox.aws.paradise4paws.com/build-info )
+  echo "New Build Number $n_build"
+  echo "Running Build Number $check"
+  if [[ "$n_build" == "$check" ]]; then
+
+    echo "Deployment Done"
+    echo -e "\033[0;32mThe enviroment is done !!!  check here -> http://sandbox.aws.paradise4paws.com\033[m"
+    break
+  else
+    echo "Please wait for few more minutes, Ecs is deploying the code."
+  fi
+done
